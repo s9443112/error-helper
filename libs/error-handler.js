@@ -10,7 +10,6 @@ const options = {
     error_status: 403,
     error_code: 0,
     level: "trace",
-    send_to_server: false,
     stack_trace: false,
 };
 exports.options = options;
@@ -81,7 +80,7 @@ BasicError.prototype.echo_stack_trace = function() {
 BasicError.prototype.print = function() {
     var filename = this.get_caller_file();
     var logger = log_manager.getLogger(`${filename}`);
-    logger[this.get_logger_type()](`${this.error_name}: ${this.message}`, this.send_to_server);;
+    logger[this.get_logger_type()](`${this.error_name}: ${this.message}`);;
 };
 
 BasicError.prototype.toString = function() {

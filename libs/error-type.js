@@ -9,7 +9,6 @@ options = {
     error_status: 403,
     error_code: -1,
     level: "trace",
-    send_to_server: false,
     stack_trace: false
 }
 */
@@ -23,7 +22,6 @@ options = {
 *     error_status: http error code (int, default: 403),
 *     error_code: body error code (int, default: -1),
 *     level: error level (string ["trace", "debug", "info", "warn", "error", "fatal", "mark"], default: 'trace'),
-*     send_to_server: log send to server (boolean, default: false),
 *     stack_trace: print stack trace (boolean, default: false)
 *
 * @param {String} error_name
