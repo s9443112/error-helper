@@ -61,7 +61,7 @@ ErrorTypeHelper("MiddlewareError", {
     this.reply_message = this.message;
 });
 
-ErrorTypeHelper("verifyError", {
+ErrorTypeHelper("VerifyError", {
     level: "error",
     stack_trace: false,
     error_status: 403,
@@ -82,4 +82,6 @@ ErrorTypeHelper("UncaughtException", {
         return error.stack.split("\n");
     };
 });
+
+exports.ErrorTypeHelper = ErrorTypeHelper;
 

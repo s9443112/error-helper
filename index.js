@@ -3,3 +3,4 @@ exports.ErrorHandler.LogManager = require("./libs/log-manager.js");
 exports.CheckerBuilder = require("./libs/CheckerBuilder.js");
 exports.initLogger = exports.ErrorHandler.initLogger;
 exports.ErrorTypes = require("./libs/error-type.js");
+exports.ErrorTypeHelper = exports.ErrorTypes.ErrorTypeHelper;
