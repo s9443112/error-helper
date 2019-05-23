@@ -72,9 +72,9 @@ BasicError.prototype.echo_stack_trace = function() {
     var filename = this.get_caller_file();
     var logger = log_manager.getLogger(`${filename}_stack`);
     for(var i = 0; i < stack.length; ++i) {
-        logger.trace(stack[i], false);
+        logger.trace(stack[i]);
     }
-    logger.trace("", false);
+    logger.trace("");
 };
 
 BasicError.prototype.print = function() {
@@ -92,16 +92,16 @@ BasicError.prototype.request_recoder = function(request) {
     var filename = this.get_caller_file();
     var time_logger = log_manager.getLogger(`${filename}_time`);
     var file_logger = log_manager.getLogger(`${filename}_all`);
-    time_logger[this.get_logger_type()](`${request.method} ${request.originalUrl}`, false);
+    time_logger[this.get_logger_type()](`${request.method} ${request.originalUrl}`);
     if(!request.body) {
         return;
     }
     var lines = JSON.stringify(request.body, null, 2).split('\n');
-    file_logger.trace("body: ", false);
+    file_logger.trace("body: ");
     for(var index in lines) {
-        file_logger.trace(lines[index], false);
+        file_logger.trace(lines[index]);
     }
-    file_logger.trace("\n", false);
+    file_logger.trace("\n");
 };
 
 BasicError.prototype.all = function(req, res) {
