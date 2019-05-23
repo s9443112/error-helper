@@ -39,12 +39,16 @@ exports.CheckerBuilder = class {
                 }
             }
             var _end = res.end;
+            if(_end._is_check_builder_end_function) {
+                return next();
+            }
             var now = Date.now();
             res.end = function() {
                 file_logger.trace(`${req.method} ${req.originalUrl} use ${Date.now() - now} ms`);
                 _end.apply(res, arguments);
                 res.end = _end;
-            }
+            };
+            res.end._is_check_builder_end_function = true;
             next();
         };
     }
