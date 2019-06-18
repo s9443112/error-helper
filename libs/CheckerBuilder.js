@@ -1,5 +1,3 @@
-var file_logger = require("./error-handler").getFileLogger();
-
 exports.CheckerBuilder = class {
     /**
      *
@@ -44,6 +42,7 @@ exports.CheckerBuilder = class {
             }
             var now = Date.now();
             res.end = function() {
+                const file_logger = require("./error-handler").getFileLogger();
                 file_logger.trace(`${req.method} ${req.originalUrl} use ${Date.now() - now} ms`);
                 _end.apply(res, arguments);
                 res.end = _end;
