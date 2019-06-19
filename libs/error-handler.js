@@ -1,5 +1,6 @@
 var fs = require('fs');
 var path = require('path');
+var http = require("http");
 var log_manager = require('./log-manager.js');
 var trace_logger_name = "stack_trace";
 
@@ -92,7 +93,7 @@ BasicError.prototype.request_recoder = function(request) {
     var filename = this.get_caller_file();
     var time_logger = log_manager.getLogger(`${filename}_time`);
     var file_logger = log_manager.getLogger(`${filename}_all`);
-    time_logger[this.get_logger_type()](`${request.method} ${request.originalUrl}`);
+    time_logger[this.get_logger_type()](`${request.method} ${request.originalUrl || request.url}`);
     if(!request.body) {
         return;
     }
@@ -109,20 +110,33 @@ BasicError.prototype.all = function(req, res) {
     if(this.stack_trace) {
         this.echo_stack_trace();
     }
-    switch(arguments.length) {
-        case 0:
-            return this.make_response();
-        case 2:
-            this.request_recoder(req);
-            req = res;
-        case 1:
-            res = req;
-            res.type('json');
-            res.status(this.error_status).end(this.make_response());
-        break;
-        default:
-            return this.make_response();
+    if(arguments.length === 0) {
+        return this.make_response();
     }
+
+    if(arguments.length === 2) {
+        if(res instanceof http.IncomingMessage && req instanceof http.ServerResponse) { // swap
+            req, res = [res, req];
+        }
+        this.request_recoder(req);
+        res.writeHead(this.error_status, {
+            "Content-Type": "application/json"
+        });
+        res.end(this.make_response());
+        return;
+    } else if(arguments.length === 1) {
+        if(req instanceof http.IncomingMessage) {
+            this.request_recoder(req);
+        } else if(req instanceof http.ServerResponse) {
+            res = req;
+            res.writeHead(this.error_status, {
+                "Content-Type": "application/json"
+            });
+            res.end(this.make_response());
+        }
+        return;
+    }
+    return this.make_response();
 };
 
 function registFileLogger(log_name, path) {
