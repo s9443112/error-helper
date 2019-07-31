@@ -9,7 +9,7 @@ const { spawn } = require('child_process');
 
 ErrorTypeHelper("TestError", {
     level: "error",
-    stack_trace: false,
+    stack_trace: true,
     error_status: 412,
     error_code: -120,
     message: "this is a test",
@@ -19,14 +19,13 @@ ErrorTypeHelper("TestError", {
 // rm.on("close", function() {
 // });
 
-initLogger("./", "./test_log_files/", ["util", "test_log_files"]);
+initLogger("./", "./test_log_files/", ["util", "test_log_files", "node_modules", ".git"]);
 var cb = function() {
 };
 
 function error_cb(error) {
     cb(error);
 }
-
 
 async function unit_test() {
     await sleep(1000);

@@ -45,7 +45,29 @@ ErrorTypeHelper("ProgramError", {
     this.error = error;
     this.message = error.message;
     this.get_stack_info = function () {
-        return error.stack.split("\n");
+        if(this._x === undefined) {
+            var originalFunc = Error.prepareStackTrace;
+            Error.prepareStackTrace = function (err, stack) {
+                var stack_info = {
+                    message: err.message,
+                    stack: []
+                };
+                for(var s of stack) {
+                    stack_info.stack.push({
+                        functionName: s.getFunctionName(),
+                        // methodName: s.getMethodName(),
+                        fileName: s.getFileName(),
+                        lineNumber: s.getLineNumber(),
+                        // typeName: s.getTypeName()
+                    });
+                }
+                return stack_info;
+            };
+
+            this._x = this.stack;
+            Error.prepareStackTrace = originalFunc;
+        }
+        return this._x;
     };
 });
 
@@ -77,7 +99,29 @@ ErrorTypeHelper("UncaughtException", {
     this.error = error;
     this.message = error.message;
     this.get_stack_info = function () {
-        return error.stack.split("\n");
+        if(this._x === undefined) {
+            var originalFunc = Error.prepareStackTrace;
+            Error.prepareStackTrace = function (err, stack) { 
+                var stack_info = {
+                    message: err.message,
+                    stack: []
+                };
+                for(var s of stack) {
+                    stack_info.stack.push({
+                        functionName: s.getFunctionName(),
+                        // methodName: s.getMethodName(),
+                        fileName: s.getFileName(),
+                        lineNumber: s.getLineNumber(),
+                        // typeName: s.getTypeName()
+                    });
+                }
+                return stack_info;
+            };
+
+            this._x = this.stack;
+            Error.prepareStackTrace = originalFunc;
+        }
+        return this._x;
     };
 });
 

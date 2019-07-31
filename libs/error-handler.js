@@ -18,126 +18,154 @@ exports.options = options;
 const level = new Set(["trace", "debug", "info", "warn", "error", "fatal", "mark"]);
 exports.level = level;
 
-exports.default_option = function(obj) {
-    for(var key in options) {
-        obj[key] = obj[key] || options[key];
+exports.default_option = function(obj, options={}) {
+    for(var key in exports.options) {
+        obj[key] = obj[key] || options[key] || exports.options[key];
     }
 };
 
-function BasicError() {
-    exports.default_option(this);
-}
+class BasicError extends Error {
+    constructor(options) {
+        super();
+        Error.captureStackTrace(this, BasicError);
+        exports.default_option(this, options);
+    }
 
-BasicError.prototype.__proto__ = Error.prototype;
+    get_logger_type() {
+        return (level.has(this.level)) ? this.level : "trace";
+    }
 
-BasicError.prototype.get_logger_type = function() {
-    return (level.has(this.level)) ? this.level : "trace";
-};
+    make_response() {
+        return JSON.stringify({
+            status: this.error_code,
+            message: this.reply_message,
+        });
+    }
 
-BasicError.prototype.make_response = function() {
-    return JSON.stringify({
-        status: this.error_code,
-        message: this.reply_message,
-    });
-};
+    get_stack_info() {
+        if(this._x === undefined) {
+            var originalFunc = Error.prepareStackTrace;
+            Error.prepareStackTrace = function (err, stack) { 
+                var stack_info = {
+                    message: err.message,
+                    stack: []
+                };
+                for(var s of stack) {
+                    stack_info.stack.push({
+                        functionName: s.getFunctionName(),
+                        // methodName: s.getMethodName(),
+                        fileName: s.getFileName(),
+                        lineNumber: s.getLineNumber(),
+                        // typeName: s.getTypeName()
+                    });
+                }
+                return stack_info;
+            };
 
-BasicError.prototype.get_stack_info = function() {
-    return [this.error_name + ": " + this.message].concat(new Error().stack.split('\n').slice(3));;
-};
+            this._x = this.stack;
+            Error.prepareStackTrace = originalFunc;
+        }
+        return this._x;
+        // return "HI"; //[this.error_name + ": " + this.message].concat(this.stack);
+    }
 
-BasicError.prototype.get_caller_file = function(ignore_name=undefined) {
-    var e = new Error();
-    var originalFunc = Error.prepareStackTrace;
-    var caller_file = "default";
-    var ignore_list = [ path.basename(__filename) ];
-    ignore_name && ignore_list.push(path.basename(ignore_name));
+    get_caller_file(ignore_name=undefined) {
+        var caller_file = "default";
+        var ignore_list = [ path.basename(__filename) ];
+        ignore_name && ignore_list.push(path.basename(ignore_name));
 
-    try {
-        Error.prepareStackTrace = function (err, stack) { return stack; };
-        while (e.stack.length) {
-            var filename = path.basename(e.stack.shift().getFileName());
-            if (!ignore_list.includes(filename)) {
-                caller_file = filename;
-                break;
+        try {
+            for(var stack of this.get_stack_info().stack) {
+                var filename = path.basename(stack.fileName);
+                if (!ignore_list.includes(filename)) {
+                    caller_file = filename;
+                    break;
+                }
+            }
+        } catch (e) {
+            console.trace(e);
+        }
+        return caller_file;
+    }
+
+    echo_stack_trace() {
+        var stack = this.get_stack_info();
+        var filename = this.get_caller_file();
+        var logger = log_manager.getLogger(`${filename}_stack`);
+        for (var stack of this.get_stack_info().stack) {
+            if(stack.functionName) {
+                logger.trace(`${stack.functionName} (${stack.fileName}:${stack.lineNumber})`);
+            } else {
+                logger.trace(`${stack.fileName}:${stack.lineNumber}`);
             }
         }
-    } catch (e) {
-        console.trace(e);
-    }
-    Error.prepareStackTrace = originalFunc;
-    return caller_file;
-}
-
-BasicError.prototype.echo_stack_trace = function() {
-    var stack = this.get_stack_info();
-    var filename = this.get_caller_file();
-    var logger = log_manager.getLogger(`${filename}_stack`);
-    for(var i = 0; i < stack.length; ++i) {
-        logger.trace(stack[i]);
-    }
-    logger.trace("");
-};
-
-BasicError.prototype.print = function() {
-    var filename = this.get_caller_file();
-    var logger = log_manager.getLogger(`${filename}`);
-    logger[this.get_logger_type()](`${this.error_name}: ${this.message}`);;
-};
-
-BasicError.prototype.toString = function() {
-    var stack = this.get_stack_info();
-    return `Error ${this.error_name} on \n ${stack.join("\n")}`;
-};
-
-BasicError.prototype.request_recoder = function(request) {
-    var filename = this.get_caller_file();
-    var time_logger = log_manager.getLogger(`${filename}_time`);
-    var file_logger = log_manager.getLogger(`${filename}_all`);
-    time_logger[this.get_logger_type()](`${request.method} ${request.originalUrl || request.url}`);
-    if(!request.body) {
-        return;
-    }
-    var lines = JSON.stringify(request.body, null, 2).split('\n');
-    file_logger.trace("body: ");
-    for(var index in lines) {
-        file_logger.trace(lines[index]);
-    }
-    file_logger.trace("\n");
-};
-
-BasicError.prototype.all = function(req, res) {
-    this.print();
-    if(this.stack_trace) {
-        this.echo_stack_trace();
-    }
-    if(arguments.length === 0) {
-        return this.make_response();
-    }
-
-    if(arguments.length === 2) {
-        if(res instanceof http.IncomingMessage && req instanceof http.ServerResponse) { // swap
-            req, res = [res, req];
+        for(var i = 0; i < stack.length; ++i) {
+            logger.trace(stack[i].getFileName());
         }
-        this.request_recoder(req);
-        res.writeHead(this.error_status, {
-            "Content-Type": "application/json"
-        });
-        res.end(this.make_response());
-        return;
-    } else if(arguments.length === 1) {
-        if(req instanceof http.IncomingMessage) {
+        logger.trace("");
+    }
+
+    print() {
+        var filename = this.get_caller_file();
+        var logger = log_manager.getLogger(`${filename}`);
+        logger[this.get_logger_type()](`${this.error_name}: ${this.message}`);;
+    }
+
+    toString() {
+        var stack = this.get_stack_info();
+        return `Error ${this.error_name} on \n ${stack.join("\n")}`;
+    }
+
+    request_recoder(request) {
+        var filename = this.get_caller_file();
+        var time_logger = log_manager.getLogger(`${filename}_time`);
+        var file_logger = log_manager.getLogger(`${filename}_all`);
+        time_logger[this.get_logger_type()](`${request.method} ${request.originalUrl || request.url}`);
+        if(!request.body) {
+            return;
+        }
+        var lines = JSON.stringify(request.body, null, 2).split('\n');
+        file_logger.trace("body: ");
+        for(var index in lines) {
+            file_logger.trace(lines[index]);
+        }
+        file_logger.trace("\n");
+    }
+
+    all(req, res) {
+        this.print();
+        if(this.stack_trace) {
+            this.echo_stack_trace();
+        }
+        if(arguments.length === 0) {
+            return this.make_response();
+        }
+
+        if(arguments.length === 2) {
+            if(res instanceof http.IncomingMessage && req instanceof http.ServerResponse) { // swap
+                req, res = [res, req];
+            }
             this.request_recoder(req);
-        } else if(req instanceof http.ServerResponse) {
-            res = req;
             res.writeHead(this.error_status, {
                 "Content-Type": "application/json"
             });
             res.end(this.make_response());
+            return;
+        } else if(arguments.length === 1) {
+            if(req instanceof http.IncomingMessage) {
+                this.request_recoder(req);
+            } else if(req instanceof http.ServerResponse) {
+                res = req;
+                res.writeHead(this.error_status, {
+                    "Content-Type": "application/json"
+                });
+                res.end(this.make_response());
+            }
+            return;
         }
-        return;
+        return this.make_response();
     }
-    return this.make_response();
-};
+}
 
 function registFileLogger(log_name, path) {
     console.log(`setting log file ${log_name} on ${path}`);
@@ -250,7 +278,7 @@ function iter_floders (basic_path, iter_path, save_path, ignore) {
 }
 
 exports.getFileLogger = function(filename) {
-    filename = (filename && path.basename(filename)) || BasicError.prototype.get_caller_file();
+    filename = (filename && path.basename(filename)) || new BasicError().get_caller_file();
     return log_manager.getLogger(filename);
 };
 
@@ -279,11 +307,14 @@ exports.initLogger = function(init_path, save_path='./', ignore=[]) {
     fs.readdir(init_path, iter_floders(init_path, '', save_path, new Set(ignore)));
 };
 
-exports.CreateErrorType = function(options={}, error_object=function(){}) {
-    for(var key in exports.options) {
-        error_object.prototype[key] = error_object.prototype[key] || options[key] || exports.options[key];
+exports.CreateErrorType = function(options={}, error_constructor=function(){}) {
+    const error_object =  class extends BasicError {
+        constructor() {
+            super(options);
+            Error.captureStackTrace(this, error_object);
+            error_constructor.apply(this, arguments);
+        }
     }
-    error_object.prototype.__proto__ = BasicError.prototype;
     return error_object;
 };
 
