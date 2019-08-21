@@ -44,29 +44,23 @@ class BasicError extends Error {
 
     get_stack_info() {
         if(this._x === undefined) {
-            var originalFunc = Error.prepareStackTrace;
-            Error.prepareStackTrace = function (err, stack) { 
-                var stack_info = {
-                    message: err.message,
-                    stack: []
-                };
-                for(var s of stack) {
-                    stack_info.stack.push({
-                        functionName: s.getFunctionName(),
-                        // methodName: s.getMethodName(),
-                        fileName: s.getFileName(),
-                        lineNumber: s.getLineNumber(),
-                        // typeName: s.getTypeName()
-                    });
-                }
-                return stack_info;
-            };
-
             this._x = this.stack;
-            Error.prepareStackTrace = originalFunc;
         }
         return this._x;
         // return "HI"; //[this.error_name + ": " + this.message].concat(this.stack);
+    }
+
+    inspect() {
+        var stacks = this.get_stack_info().stack;
+        var return_string = `${this.error_name}: ${this.message}\n`;
+        for (var stack of stacks) {
+            if(stack.functionName) {
+                return_string += `\t${stack.functionName} (${stack.fileName}:${stack.lineNumber})\n`
+            } else {
+                return_string += `\t${stack.fileName}:${stack.lineNumber}\n`
+            }
+        }
+        return return_string;
     }
 
     get_caller_file(ignore_name=undefined) {
@@ -89,7 +83,6 @@ class BasicError extends Error {
     }
 
     echo_stack_trace() {
-        var stack = this.get_stack_info();
         var filename = this.get_caller_file();
         var logger = log_manager.getLogger(`${filename}_stack`);
         for (var stack of this.get_stack_info().stack) {
@@ -112,8 +105,8 @@ class BasicError extends Error {
     }
 
     toString() {
-        var stack = this.get_stack_info();
-        return `Error ${this.error_name} on \n ${stack.join("\n")}`;
+        var stack = this.get_stack_info().stack;
+        return `${this.error_name}: ${this.message}`;
     }
 
     request_recoder(request) {
@@ -132,6 +125,12 @@ class BasicError extends Error {
         file_logger.trace("\n");
     }
 
+    get_head() {
+        return {
+            "Content-Type": "application/json"
+        }
+    }
+
     all(req, res) {
         this.print();
         if(this.stack_trace) {
@@ -146,9 +145,7 @@ class BasicError extends Error {
                 req, res = [res, req];
             }
             this.request_recoder(req);
-            res.writeHead(this.error_status, {
-                "Content-Type": "application/json"
-            });
+            res.writeHead(this.error_status, this.get_head());
             res.end(this.make_response());
             return;
         } else if(arguments.length === 1) {
@@ -311,6 +308,7 @@ exports.CreateErrorType = function(options={}, error_constructor=function(){}) {
     const error_object =  class extends BasicError {
         constructor() {
             super(options);
+            this.name = options.error_name | "BasicError";
             Error.captureStackTrace(this, error_object);
             error_constructor.apply(this, arguments);
         }

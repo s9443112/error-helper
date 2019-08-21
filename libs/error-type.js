@@ -32,6 +32,7 @@ function ErrorTypeHelper(error_name, options, object = function () { }) {
     object = BasicError.CreateErrorType(options, object);
     object.prototype.error_name = error_name;
     exports[error_name] = object;
+    return object
 }
 
 ErrorTypeHelper("TestError");
@@ -46,26 +47,7 @@ ErrorTypeHelper("ProgramError", {
     this.message = error.message;
     this.get_stack_info = function () {
         if(this._x === undefined) {
-            var originalFunc = Error.prepareStackTrace;
-            Error.prepareStackTrace = function (err, stack) {
-                var stack_info = {
-                    message: err.message,
-                    stack: []
-                };
-                for(var s of stack) {
-                    stack_info.stack.push({
-                        functionName: s.getFunctionName(),
-                        // methodName: s.getMethodName(),
-                        fileName: s.getFileName(),
-                        lineNumber: s.getLineNumber(),
-                        // typeName: s.getTypeName()
-                    });
-                }
-                return stack_info;
-            };
-
-            this._x = this.stack;
-            Error.prepareStackTrace = originalFunc;
+            this._x = this.error.stack;
         }
         return this._x;
     };
@@ -100,26 +82,7 @@ ErrorTypeHelper("UncaughtException", {
     this.message = error.message;
     this.get_stack_info = function () {
         if(this._x === undefined) {
-            var originalFunc = Error.prepareStackTrace;
-            Error.prepareStackTrace = function (err, stack) { 
-                var stack_info = {
-                    message: err.message,
-                    stack: []
-                };
-                for(var s of stack) {
-                    stack_info.stack.push({
-                        functionName: s.getFunctionName(),
-                        // methodName: s.getMethodName(),
-                        fileName: s.getFileName(),
-                        lineNumber: s.getLineNumber(),
-                        // typeName: s.getTypeName()
-                    });
-                }
-                return stack_info;
-            };
-
-            this._x = this.stack;
-            Error.prepareStackTrace = originalFunc;
+            this._x = this.error.stack;
         }
         return this._x;
     };
