@@ -1,10 +1,12 @@
-exports.ErrorHandler = require("./libs/error-handler.js");
-exports.ErrorHandler.LogManager = require("./libs/log-manager.js");
-exports.CheckerBuilder = require("./libs/CheckerBuilder.js");
-exports.initLogger = exports.ErrorHandler.initLogger;
-exports.ErrorTypes = require("./libs/error-type.js");
-exports.ErrorTypeHelper = exports.ErrorTypes.ErrorTypeHelper;
-exports.BasicError = exports.ErrorHandler.basic_class;
+exports.http = require("./libs/http/");
+exports.socket = require("./libs/socket/");
+
+exports.BasicError = require("./libs/BasicError.js");
+exports.initLogger = require("./libs/initLogger.js");
+exports.getFileLogger = require("./libs/log-manager.js").getFileLogger;
+exports.CheckerBuilder = exports.http.CheckerBuilder;
+exports.ErrorTypes = exports.http.ErrorTypes;
+exports.ErrorTypeHelper = exports.ErrorTypes.HttpErrorTypeHelper;
 
 Error.prepareStackTrace = function (err, stack) {
     var stack_info = {
@@ -22,3 +24,51 @@ Error.prepareStackTrace = function (err, stack) {
     }
     return stack_info;
 };
+
+const Console = require("console");
+const util = require("util");
+const origin = util.inspect;
+util.inspect = function(error) {
+    if(error instanceof exports.BasicError) {
+        return error.inspect();
+    }
+    if(error instanceof Error) {
+        var stacks = error.stack.stack;
+        var return_string = `${error.name}: ${error.message}\n`;
+        for (var stack of stacks) {
+            if(stack.functionName) {
+                return_string += `   at: ${stack.functionName} (${stack.fileName}:${stack.lineNumber})\n`;
+            } else {
+                return_string += `   at: ${stack.fileName}:${stack.lineNumber}\n`;
+            }
+        }
+        return return_string;
+    }
+    origin.apply(util, arguments);
+};
+
+const log = console.log;
+console.log = function(...args) {
+    const error = args[0];
+    if(error instanceof exports.BasicError) {
+        return log(error.inspect());
+    }
+    if(error instanceof Error) {
+        var stacks = error.stack.stack;
+        var return_string = `${error.name}: ${error.message}\n`;
+        for (var stack of stacks) {
+            if(stack.functionName) {
+                return_string += `   at: ${stack.functionName} (${stack.fileName}:${stack.lineNumber})\n`;
+            } else {
+                return_string += `   at: ${stack.fileName}:${stack.lineNumber}\n`;
+            }
+        }
+        return log(return_string);
+    }
+    return log.apply(this, args);
+};
+
+process.on("uncaughtException", function(error) {
+    console.log(error);
+    process.exit(1);
+});

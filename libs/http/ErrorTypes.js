@@ -1,5 +1,4 @@
-const BasicError = require('./error-handler.js');
-const log_manager = require('./log-manager.js');
+const BasicHttpError = require('./BasicHttpError.js');
 
 /*
   // options default
@@ -28,14 +27,27 @@ options = {
 * @param {Object} options (optional)
 * @param {Function} object (optional)
 */
+
+function CreateErrorType(options={}, error_constructor=function(){}) {
+    const error_object =  class extends BasicHttpError {
+        constructor() {
+            super(options);
+            this.name = options.error_name | "BasicHttpError";
+            Error.captureStackTrace(this, error_object);
+            error_constructor.apply(this, arguments);
+        }
+    };
+    return error_object;
+};
+
 function ErrorTypeHelper(error_name, options, object = function () { }) {
-    object = BasicError.CreateErrorType(options, object);
+    object = CreateErrorType(options, object);
     object.prototype.error_name = error_name;
     exports[error_name] = object;
-    return object
+    return object;
 }
 
-ErrorTypeHelper("TestError");
+// ErrorTypeHelper("TestError");
 
 ErrorTypeHelper("ProgramError", {
     level: "fatal",
@@ -43,14 +55,15 @@ ErrorTypeHelper("ProgramError", {
     error_status: 500,
     error_code: 0
 }, function (error) {
-    this.error = error;
-    this.message = error.message;
-    this.get_stack_info = function () {
-        if(this._x === undefined) {
-            this._x = this.error.stack;
-        }
-        return this._x;
-    };
+    if (error instanceof Error) {
+        this.error = error;
+        this.message = error.message;
+        this.get_stack_info = function () {
+            return this.error.stack;
+        };
+    } else if (typeof error === 'string'){
+        this.message = error;
+    }
 });
 
 ErrorTypeHelper("MiddlewareError", {
@@ -81,12 +94,9 @@ ErrorTypeHelper("UncaughtException", {
     this.error = error;
     this.message = error.message;
     this.get_stack_info = function () {
-        if(this._x === undefined) {
-            this._x = this.error.stack;
-        }
-        return this._x;
+        return this.error.stack;
     };
 });
 
-exports.ErrorTypeHelper = ErrorTypeHelper;
+exports.HttpErrorTypeHelper = ErrorTypeHelper;
 

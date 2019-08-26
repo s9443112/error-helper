@@ -1,4 +1,5 @@
-exports.CheckerBuilder = class {
+const ErrorTypes = require("./ErrorTypes.js");
+class CheckerBuilder {
     /**
      *
      * @param {Array<Function>} check_function 範例 `check_function_example`
@@ -6,7 +7,7 @@ exports.CheckerBuilder = class {
     constructor(check_functions) {
         for(var i = 0; i < check_functions.length; ++i) {
             if(typeof(check_functions[i]) !== 'function') {
-                throw Error('checker must a function');
+                throw ErrorTypes.ProgramError('checker must a function');
             }
         }
         this.checkers = check_functions;
@@ -18,7 +19,7 @@ exports.CheckerBuilder = class {
      */
     add_function(check_function) {
         if(typeof(check_function) !== 'function') {
-            throw Error('checker must a function');
+            throw ErrorTypes.ProgramError('checker must a function');
         }
         this.checkers.push(check_function);
     }
@@ -52,3 +53,6 @@ exports.CheckerBuilder = class {
         };
     }
 };
+
+CheckerBuilder.CheckerBuilder = CheckerBuilder;
+module.exports = CheckerBuilder;

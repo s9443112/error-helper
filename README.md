@@ -1,9 +1,6 @@
 # ErrorHelper
 automatic error processing
 
-# Warning
-do not console.log(error);
-
 # How To Use It
 Go to porject folder
 

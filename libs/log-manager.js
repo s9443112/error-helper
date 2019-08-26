@@ -1,3 +1,4 @@
+const path = require("path");
 const logger = require('log4js');
 
 var config = {
@@ -46,4 +47,14 @@ exports.registCategory = function(name, options) {
         }
     }
     config.categories[name] = options;
+};
+
+function get_caller_file() {
+    const stack = new Error().stack;
+    return stack[2].getFileName();
+}
+
+exports.getFileLogger = function(filename) {
+    filename = (filename && path.basename(filename)) || get_caller_file();
+    return exports.getLogger(filename);
 };
