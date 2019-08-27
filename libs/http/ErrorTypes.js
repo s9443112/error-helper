@@ -98,5 +98,5 @@ ErrorTypeHelper("UncaughtException", {
     };
 });
 
-exports.HttpErrorTypeHelper = ErrorTypeHelper;
+exports.ErrorTypeHelper = ErrorTypeHelper;
 

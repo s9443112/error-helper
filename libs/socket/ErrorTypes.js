@@ -49,4 +49,4 @@ function ErrorTypeHelper(error_name, options, object = function () { }) {
     return object;
 }
 
-exports.SocketErrorWrapper = require("./SocketErrorWrapper.js");
+exports.ErrorWrapper = require("./SocketErrorWrapper.js");

@@ -1,6 +1,6 @@
 {
     "name": "error-helper",
-    "version": "2.2.0",
+    "version": "2.2.1",
     "dependencies": {
         "log4js": "^3.0.6"
     }

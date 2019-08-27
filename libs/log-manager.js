@@ -50,8 +50,13 @@ exports.registCategory = function(name, options) {
 };
 
 function get_caller_file() {
-    const stack = new Error().stack;
-    return stack[2].getFileName();
+    const stacks = new Error().stack.stack;
+    for(var stack of stacks) {
+        if (stack.fileName.indexOf("node_module") === -1) {
+            return stack.fileName;
+        }
+    }
+    return "default";
 }
 
 exports.getFileLogger = function(filename) {

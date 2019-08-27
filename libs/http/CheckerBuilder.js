@@ -1,4 +1,5 @@
 const ErrorTypes = require("./ErrorTypes.js");
+const getFileLogger = require("../log-manager.js").getFileLogger;
 class CheckerBuilder {
     /**
      *
@@ -43,7 +44,7 @@ class CheckerBuilder {
             }
             var now = Date.now();
             res.end = function() {
-                const file_logger = require("./error-handler").getFileLogger();
+                const file_logger = getFileLogger();
                 file_logger.trace(`${req.method} ${req.originalUrl || req.url} use ${Date.now() - now} ms`);
                 _end.apply(res, arguments);
                 res.end = _end;
