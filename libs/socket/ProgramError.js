@@ -1,8 +1,8 @@
 const log_manager = require('../log-manager.js');
 const SocketWrapper = require("./SocketWrapper.js");
-const { BasicError, ErrorTypes } = require("../../index.js");
+const ErrorTypes = require("../http/ErrorTypes.js");
 
-class SocketErrorWrapper extends require("./BasicSocketError.js") {
+class ProgramError extends require("./BasicError.js") {
     constructor(error) {
         if(error instanceof Error) {
             error = new ErrorTypes.ProgramError(error);
@@ -15,8 +15,9 @@ class SocketErrorWrapper extends require("./BasicSocketError.js") {
             level: error.level,
             stack_trace: error.stack_trace,
         });
+        this.name = "ProgramError";
         this.error_name = this.name;
-        Error.captureStackTrace(this, SocketErrorWrapper);
+        Error.captureStackTrace(this, ProgramError);
         this.error = error;
     }
 
@@ -38,4 +39,4 @@ class SocketErrorWrapper extends require("./BasicSocketError.js") {
     }
 }
 
-module.exports = SocketErrorWrapper;
+module.exports = ProgramError;

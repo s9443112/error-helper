@@ -1,19 +1,31 @@
 const util = require("util");
 const CheckerBuilder = require("./CheckerBuilder.js");
-const SocketErrorWrapper = require("./SocketErrorWrapper.js");
-const BasicSocketError = require("./BasicSocketError.js");
-const { ErrorTypes } = require("../../index.js");
+const ProgramError = require("./ProgramError.js");
+const BasicError = require("./BasicError.js");
+const ErrorTypes = require("./ErrorTypes.js");
+const { BasicError: BasicHttpError } = require("../../index.js").http;
 
 class SocketWrapper {
     constructor(socket) {
         this._socket = socket;
     }
 
+    emit(...args) {
+        this._socket.emit.apply(this._socket, args);
+    }
+
     on(event, ...args) {
         if(args.length === 0) {
-            throw new ErrorTypes.ProgramError("empty callback");
+            throw new Error("empty callback");
         }
         this._socket.on(event, this.socket_job_wrapper(event, args));
+    }
+
+    once(event, ...args) {
+        if(args.length === 0) {
+            throw new Error("empty callback");
+        }
+        this._socket.once(event, this.socket_job_wrapper(event, args));
     }
 
     socket_job_wrapper(event, funcs) {
@@ -21,36 +33,33 @@ class SocketWrapper {
         return async function(...args) {
             try {
                 for(var func of funcs) {
-                    if(func.name === "CheckerBuilder_checkers") {
-                        await func.apply(self, args);
-                    } else {
-                        await func.apply(func, args);
-                    }
+                    await func.apply(func, args);
                 }
             } catch(error) {
-                self.process_uncatch_error(error, event, args);
+                error = self.process_uncatch_error(error, event, args);
+                error.all(args, self);
             }
         };
     };
 
     process_uncatch_error(error, event, args) {
-        if(error instanceof BasicSocketError) {
-            error.all(args, this);
-        } else if(error instanceof ErrorTypes) {
-        } else if (error instanceof Error) {
+        if(error instanceof BasicError) {
+            return error;
+        } else if(error instanceof BasicHttpError) {
             return new ErrorTypes.ProgramError(error);
+        } else if (error instanceof Error) {
+            try {
+            return new ErrorTypes.ProgramError(error);
+            } catch (error) {
+                console.log(error);
+                process.exit(1);
+            }
         } else if (typeof error === 'string') {
             return new ErrorTypes.ProgramError(error);
         } else {
-            new ErrorTypes.ProgramError(`get unknow object ${util.inspect(error)}`);
+            return new ErrorTypes.ProgramError(`get unknow object ${util.inspect(error)}`);
         }
     }
 }
-
-SocketWrapper.error_handler = function(error) {
-};
-
-SocketWrapper.process_uncatch_error = function(error) {
-};
 
 module.exports = SocketWrapper;

@@ -2,7 +2,7 @@ class CheckerBuilder extends require("../http/CheckerBuilder.js") {
     create_middleware_checker() {
         var checkers = this.checkers;
 
-        const CheckerBuilder_checkers = async function (user, ...args) {
+        const CheckerBuilder_checkers = async function (...args) {
             for(var i = 0; i < checkers.length; ++i) {
                 var error = await checkers[i].apply(checkers[i], args);
                 if(error) {

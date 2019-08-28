@@ -6,7 +6,7 @@ exports.initLogger = require("./libs/initLogger.js");
 exports.getFileLogger = require("./libs/log-manager.js").getFileLogger;
 exports.CheckerBuilder = exports.http.CheckerBuilder;
 exports.ErrorTypes = exports.http.ErrorTypes;
-exports.ErrorTypeHelper = exports.ErrorTypes.HttpErrorTypeHelper;
+exports.ErrorTypeHelper = exports.ErrorTypes.ErrorTypeHelper;
 
 Error.prepareStackTrace = function (err, stack) {
     var stack_info = {

@@ -1,4 +1,4 @@
-const BasicHttpError = require('./BasicHttpError.js');
+const BasicError = require('./BasicError.js');
 
 /*
   // options default
@@ -29,10 +29,10 @@ options = {
 */
 
 function CreateErrorType(options={}, error_constructor=function(){}) {
-    const error_object =  class extends BasicHttpError {
+    const error_object =  class extends BasicError {
         constructor() {
             super(options);
-            this.name = options.error_name | "BasicHttpError";
+            this.name = options.error_name || "BasicHttpError";
             Error.captureStackTrace(this, error_object);
             error_constructor.apply(this, arguments);
         }
