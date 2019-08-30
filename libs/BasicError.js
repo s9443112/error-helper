@@ -83,9 +83,6 @@ class BasicError extends Error {
                 logger.trace(`${stack.fileName}: ${stack.lineNumber}`);
             }
         }
-        for(var i = 0; i < stack.length; ++i) {
-            logger.trace(stack[i].getFileName());
-        }
         logger.trace("");
     }
 
