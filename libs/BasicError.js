@@ -10,9 +10,9 @@ const options = {
     stack_trace: false,
 };
 
-function default_option(obj, options={}) {
+function default_option(obj, m_options={}) {
     for(var key in options) {
-        obj[key] = obj[key] || options[key] || options[key];
+        obj[key] = obj[key] || m_options[key] || options[key];
     }
 };
 
@@ -61,6 +61,9 @@ class BasicError extends Error {
 
         try {
             for(var stack of this.get_stack_info().stack) {
+                if(!stack.fileName) {
+                    continue;
+                }
                 var filename = path.basename(stack.fileName);
                 if (!ignore_list.includes(filename)) {
                     caller_file = filename;
