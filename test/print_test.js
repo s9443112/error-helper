@@ -11,7 +11,6 @@ async function unit_test() {
     const error1 = new ErrorTypes.ProgramError(error);
     console.log(error1);
     const error2 = new ErrorTypes.ProgramError("test3");
-    console.log(error2);
 }
 
 async function main(roomName) {

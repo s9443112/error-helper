@@ -60,6 +60,26 @@ class SocketWrapper {
             return new ErrorTypes.ProgramError(`get unknow object ${util.inspect(error)}`);
         }
     }
+
+    disconnect(...args) {
+        this._socket.disconnect(...args);
+    }
+
+    connect(...args) {
+        this._socket.connect(...args);
+    }
+
+    open(...args) {
+        this._socekt.open(...args);
+    }
+
+    destroy(...args) {
+        this._socket.destroy(...args);
+    }
+
+    close(...args) {
+        this._socket.close(...args);
+    }
 }
 
 module.exports = SocketWrapper;

@@ -8,23 +8,6 @@ exports.CheckerBuilder = exports.http.CheckerBuilder;
 exports.ErrorTypes = exports.http.ErrorTypes;
 exports.ErrorTypeHelper = exports.ErrorTypes.ErrorTypeHelper;
 
-Error.prepareStackTrace = function (err, stack) {
-    var stack_info = {
-        message: err.message,
-        stack: []
-    };
-    for(var s of stack) {
-        stack_info.stack.push({
-            functionName: s.getFunctionName(),
-            // methodName: s.getMethodName(),
-            fileName: s.getFileName(),
-            lineNumber: s.getLineNumber(),
-            // typeName: s.getTypeName()
-        });
-    }
-    return stack_info;
-};
-
 const Console = require("console");
 const util = require("util");
 const origin = util.inspect;
@@ -45,6 +28,27 @@ util.inspect = function(error) {
         return return_string;
     }
     origin.apply(util, arguments);
+};
+
+Error.prepareStackTrace = function (err, stack) {
+    var stack_info = {
+        message: err.message,
+        stack: []
+    };
+    for(var s of stack) {
+        stack_info.stack.push({
+            functionName: s.getFunctionName(),
+            // methodName: s.getMethodName(),
+            fileName: s.getFileName(),
+            lineNumber: s.getLineNumber(),
+            // typeName: s.getTypeName()
+        });
+    }
+
+    stack_info.split = function(...args) {
+        return util.inspect(err).split(...args);
+    };
+    return stack_info;
 };
 
 const log = console.log;
