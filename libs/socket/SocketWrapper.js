@@ -11,7 +11,7 @@ class SocketWrapper {
     }
 
     emit(...args) {
-        this._socket.emit.apply(this._socket, args);
+        this._socket.emit(...args);
     }
 
     on(event, ...args) {
