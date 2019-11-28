@@ -8,35 +8,11 @@ exports.CheckerBuilder = exports.http.CheckerBuilder;
 exports.ErrorTypes = exports.http.ErrorTypes;
 exports.ErrorTypeHelper = exports.ErrorTypes.ErrorTypeHelper;
 
-const Console = require("console");
-const util = require("util");
-const origin = util.inspect;
-util.inspect = function(error) {
-    if(error instanceof exports.BasicError) {
-        return error.inspect();
-    }
-    if(error instanceof Error) {
-        var stacks = error.stack.stack;
-        var return_string = `${error.name}: ${error.message}\n`;
-        for (var stack of stacks) {
-            if(stack.functionName) {
-                return_string += `   at: ${stack.functionName} (${stack.fileName}:${stack.lineNumber})\n`;
-            } else {
-                return_string += `   at: ${stack.fileName}:${stack.lineNumber}\n`;
-            }
-        }
-        return return_string;
-    }
-    origin.apply(util, arguments);
-};
-
 Error.prepareStackTrace = function (err, stack) {
-    var stack_info = {
-        message: err.message,
-        stack: []
-    };
+    var stack_info = [
+    ];
     for(var s of stack) {
-        stack_info.stack.push({
+        stack_info.push({
             functionName: s.getFunctionName(),
             // methodName: s.getMethodName(),
             fileName: s.getFileName(),
@@ -45,31 +21,18 @@ Error.prepareStackTrace = function (err, stack) {
         });
     }
 
-    stack_info.split = function(...args) {
-        return util.inspect(err).split(...args);
-    };
-    return stack_info;
-};
+    err._stack_info = stack_info;
 
-const log = console.log;
-console.log = function(...args) {
-    const error = args[0];
-    if(error instanceof exports.BasicError) {
-        return log(error.inspect());
-    }
-    if(error instanceof Error) {
-        var stacks = error.stack.stack;
-        var return_string = `${error.name}: ${error.message}\n`;
-        for (var stack of stacks) {
-            if(stack.functionName) {
-                return_string += `   at: ${stack.functionName} (${stack.fileName}:${stack.lineNumber})\n`;
-            } else {
-                return_string += `   at: ${stack.fileName}:${stack.lineNumber}\n`;
-            }
+    var stacks = stack_info;
+    var return_string = `${err.name}: ${err.message}\n`;
+    for (var info of stacks) {
+        if(info.functionName) {
+            return_string += `   at: ${info.functionName} (${info.fileName}:${info.lineNumber})\n`;
+        } else {
+            return_string += `   at: ${info.fileName}:${info.lineNumber}\n`;
         }
-        return log(return_string);
     }
-    return log.apply(this, args);
+    return return_string;
 };
 
 process.on("uncaughtException", function(error) {

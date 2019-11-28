@@ -38,11 +38,12 @@ class BasicError extends Error {
     }
 
     get_stack_info() {
-        return this.stack;
+        var stack = this.stack;
+        return this._stack_info;
     }
 
     inspect() {
-        var stacks = this.get_stack_info().stack;
+        var stacks = this.get_stack_info();
         var return_string = `${this.error_name}: ${this.message}\n`;
         for (var stack of stacks) {
             if(stack.functionName) {
@@ -60,7 +61,7 @@ class BasicError extends Error {
         ignore_name && ignore_list.push(path.basename(ignore_name));
 
         try {
-            for(var stack of this.get_stack_info().stack) {
+            for(var stack of this.get_stack_info()) {
                 if(!stack.fileName) {
                     continue;
                 }
@@ -79,7 +80,7 @@ class BasicError extends Error {
     echo_stack_trace() {
         var filename = this.get_caller_file();
         var logger = log_manager.getLogger(`${filename}_stack`);
-        for (var stack of this.get_stack_info().stack) {
+        for (var stack of this.get_stack_info()) {
             if(stack.functionName) {
                 logger.trace(`${stack.functionName} (${stack.fileName}:${stack.lineNumber})`);
             } else {
@@ -96,7 +97,7 @@ class BasicError extends Error {
     }
 
     toString() {
-        var stack = this.get_stack_info().stack;
+        var stack = this.get_stack_info();
         return `${this.error_name}: ${this.message}`;
     }
 

@@ -59,7 +59,8 @@ ErrorTypeHelper("ProgramError", {
         this.error = error;
         this.message = error.message;
         this.get_stack_info = function () {
-            return this.error.stack;
+            var stack = this.error.stack;
+            return this.error._stack_info;
         };
     } else if (typeof error === 'string'){
         this.message = error;
@@ -94,7 +95,8 @@ ErrorTypeHelper("UncaughtException", {
     this.error = error;
     this.message = error.message;
     this.get_stack_info = function () {
-        return this.error.stack;
+        var stack = this.error.stack;
+        return this.error._stack_info;
     };
 });
 
